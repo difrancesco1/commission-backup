@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Firebase configuration
 const firebaseConfig = {
@@ -128,7 +128,7 @@ async function backupFirestore() {
     generateHtmlView(backupDir);
 
     console.log(`Backup completed successfully! Files saved to: ${backupDir}`);
-    return backupDir;
+    return `/backups/${path.basename(backupDir)}/index.html`;
 }
 
 // Convert Firestore timestamps to ISO strings
@@ -157,7 +157,6 @@ function convertTimestamps(obj) {
     return result;
 }
 
-// Generate HTML view of the data
 function generateHtmlView(backupDir) {
     const htmlFilePath = path.join(backupDir, 'index.html');
     const collections = fs.readdirSync(backupDir)
@@ -171,7 +170,193 @@ function generateHtmlView(backupDir) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Firestore Backup</title>
-  <link rel="stylesheet" href="/styles.css">
+  <style>
+    /* Main Variables */
+    :root {
+      --primary-color: #5d5cd6;
+      --primary-hover: #4a49c0;
+      --success-bg: #d4edda;
+      --success-text: #155724;
+      --error-bg: #f8d7da;
+      --error-text: #721c24;
+      --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      --border-radius: 5px;
+    }
+
+    /* Base Styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      background-color: #f8f9fa;
+      min-height: 100vh;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    h1 {
+      margin-top: 0;
+      color: #444;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    /* Back Link */
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Navigation */
+    .nav {
+      position: sticky;
+      top: 0;
+      background-color: #fff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: var(--border-radius);
+      border: 1px solid #ddd;
+      z-index: 100;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: var(--card-shadow);
+    }
+    .nav a {
+      color: var(--primary-color);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background-color: #f0f2f5;
+      transition: background-color 0.2s;
+    }
+    .nav a:hover {
+      background-color: #e4e6f0;
+    }
+
+    /* Search */
+    .search {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    
+    /* Collection */
+    .collection {
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: var(--card-shadow);
+    }
+    .collection h2 {
+      margin-top: 0;
+      color: #444;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    /* Document */
+    .document {
+      background-color: #f8f9fa;
+      border-radius: var(--border-radius);
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid #eee;
+    }
+    .document-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .document h3 {
+      margin: 0;
+      color: #444;
+    }
+
+    /* Status Badges */
+    .badges {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .status {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .paid {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .archived {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .completed {
+      background-color: #cce5ff;
+      color: #004085;
+    }
+
+    /* JSON Content */
+    pre {
+      background-color: #f4f5f8;
+      padding: 15px;
+      border-radius: var(--border-radius);
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      border: 1px solid #eee;
+    }
+
+    /* Footer */
+    .timestamp {
+      text-align: center;
+      font-size: 0.85em;
+      color: #888;
+      margin-top: 30px;
+    }
+
+    /* Utilities */
+    .hidden {
+      display: none;
+    }
+
+    /* Media Queries */
+    @media (max-width: 768px) {
+      .document-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .badges {
+        margin-top: 10px;
+      }
+    }
+  </style>
   <script>
     function filterDocuments() {
       const searchTerm = document.getElementById('search').value.toLowerCase();
@@ -189,64 +374,64 @@ function generateHtmlView(backupDir) {
   </script>
 </head>
 <body>
-  <a href="/" class="back-link">← Back to Backup List</a>
-  <h1>Firestore Backup</h1>
-  <p>Backup created on: ${new Date().toLocaleString()}</p>
-  
-  <input type="text" id="search" class="search" placeholder="Search documents..." onkeyup="filterDocuments()">
-  
-  <div class="nav">
-    ${collections.map(coll => `<a href="#${coll}">${coll}</a>`).join('')}
-  </div>
+  <div class="container">
+    <a href="/" class="back-link">← Back to Backup List</a>
+    <h1>Firestore Backup</h1>
+    <p>Backup created on: ${new Date().toLocaleString()}</p>
+    
+    <input type="text" id="search" class="search" placeholder="Search documents..." onkeyup="filterDocuments()">
+    
+    <div class="nav">
+      ${collections.map(coll => `<a href="#${coll}">${coll}</a>`).join('')}
+    </div>
 `;
 
-    // Process each collection JSON file
     for (const collectionName of collections) {
         const filePath = path.join(backupDir, `${collectionName}.json`);
         const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
         htmlContent += `
-  <div class="collection" id="${collectionName}">
-    <h2>${collectionName} (${Object.keys(jsonData).length} documents)</h2>
+    <div class="collection" id="${collectionName}">
+      <h2>${collectionName} (${Object.keys(jsonData).length} documents)</h2>
 `;
 
-        // Add each document
         for (const [docId, docData] of Object.entries(jsonData)) {
-            // For commissions collection, add special styling
             if (collectionName === 'commissions') {
                 const isPaid = docData.PAID === true;
                 const isArchived = docData.ARCHIVE === true;
                 const isCompleted = docData.COMPLETE === true;
 
                 htmlContent += `
-    <div class="document">
-      <div class="document-header">
-        <h3>${docData.TWITTER || docId}</h3>
-        <div class="badges">
-          ${isPaid ? '<span class="status paid">Paid</span>' : '<span class="status pending">Pending</span>'}
-          ${isArchived ? '<span class="status archived">Archived</span>' : ''}
-          ${isCompleted ? '<span class="status completed">Completed</span>' : ''}
-          ${docData.COMPLEX ? '<span class="status">★ Complex</span>' : ''}
+      <div class="document">
+        <div class="document-header">
+          <h3>${docData.TWITTER || docId}</h3>
+          <div class="badges">
+            ${isPaid ? '<span class="status paid">Paid</span>' : '<span class="status pending">Pending</span>'}
+            ${isArchived ? '<span class="status archived">Archived</span>' : ''}
+            ${isCompleted ? '<span class="status completed">Completed</span>' : ''}
+            ${docData.COMPLEX ? '<span class="status">★ Complex</span>' : ''}
+          </div>
         </div>
-      </div>
-      <pre>${JSON.stringify(docData, null, 2)}</pre>
-    </div>`;
+        <pre>${JSON.stringify(docData, null, 2)}</pre>
+      </div>`;
             } else {
-                // Generic document display
                 htmlContent += `
-    <div class="document">
-      <h3>${docId}</h3>
-      <pre>${JSON.stringify(docData, null, 2)}</pre>
-    </div>`;
+      <div class="document">
+        <div class="document-header">
+          <h3>${docId}</h3>
+        </div>
+        <pre>${JSON.stringify(docData, null, 2)}</pre>
+      </div>`;
             }
         }
 
         htmlContent += `
-  </div>`;
+    </div>`;
     }
 
     htmlContent += `
-  <div class="timestamp">Generated on ${new Date().toLocaleString()}</div>
+    <div class="timestamp">Generated on ${new Date().toLocaleString()}</div>
+  </div>
 </body>
 </html>
 `;
