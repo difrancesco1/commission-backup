@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rosieuna Backup Tool</title>
+  <link rel="stylesheet" href="./styles/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Rosieuna Backup Tool</h1>
+    </header>
+    
+    <div class="card">
+      <div class="card-content">
+        <h2>Create New Backup</h2>
+        <button id="backupButton" class="backup-button">Create Backup</button>
+        <div id="status"></div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-content">
+        <h2>Previous Backups</h2>
+        <div id="noBackups">No backups available.</div>
+        <ul id="backupList" class="backup-list"></ul>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const backupButton = document.getElementById('backupButton');
+      const statusDiv = document.getElementById('status');
+      const backupList = document.getElementById('backupList');
+      const noBackupsDiv = document.getElementById('noBackups');
+      
+      loadBackups();
+      
+      backupButton.addEventListener('click', async () => {
+        try {
+          backupButton.disabled = true;
+          backupButton.innerHTML = 'Creating Backup <span class="loading"></span>';
+          statusDiv.style.display = 'none';
+          
+          const response = await fetch('/api/backup');
+          const data = await response.json();
+          
+          if (data.success) {
+            statusDiv.className = 'success';
+            statusDiv.textContent = 'Backup created successfully!';
+            statusDiv.style.display = 'block';
+            
+            loadBackups();
+          } else {
+            statusDiv.className = 'error';
+            statusDiv.textContent = `Error: ${data.error || 'Failed to create backup'}`;
+            statusDiv.style.display = 'block';
+          }
+        } catch (error) {
+          statusDiv.className = 'error';
+          statusDiv.textContent = `Error: ${error.message || 'Failed to create backup'}`;
+          statusDiv.style.display = 'block';
+        } finally {
+          backupButton.disabled = false;
+          backupButton.textContent = 'Create Backup';
+        }
+      });
+      
+      async function loadBackups() {
+        try {
+          const response = await fetch('/api/backups');
+          const data = await response.json();
+          
+          if (data.backups && data.backups.length > 0) {
+            noBackupsDiv.style.display = 'none';
+            
+            backupList.innerHTML = '';
+            
+            data.backups.forEach(backup => {
+              const li = document.createElement('li');
+              li.className = 'backup-item';
+              
+              const date = new Date(backup.created);
+              const formattedDate = date.toLocaleString();
+              
+              li.innerHTML = `
+                <span class="backup-date">${formattedDate}</span>
+                <a href="${backup.path}" target="_blank" class="view-link">View Backup</a>
+              `;
+              
+              backupList.appendChild(li);
+            });
+          } else {
+            noBackupsDiv.style.display = 'block';
+            backupList.innerHTML = '';
+          }
+        } catch (error) {
+          console.error('Error loading backups:', error);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

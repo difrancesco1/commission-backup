@@ -1,0 +1,25 @@
+{
+    "name": "commissions-backup",
+    "version": "1.0.0",
+    "description": "Backup tool for Firestore commissions data",
+    "main": "index.js",
+    "scripts": {
+      "start": "node index.js",
+      "dev": "nodemon index.js",
+      "build": "mkdir -p dist && cp -R index.js public package.json package-lock.json dist/"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "firebase": "^11.3.1",
+      "path": "^0.12.7"
+    },
+    "type": "commonjs",
+    "devDependencies": {
+      "nodemon": "^3.0.2"
+    },
+    "engines": {
+      "node": ">=16.0.0"
+    },
+    "author": "",
+    "license": "MIT"
+  }
